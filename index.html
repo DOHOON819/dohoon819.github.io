@@ -8,9 +8,10 @@
   <title>스마트팜 · 실시간 농장 모니터링</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%230c100e'/%3E%3Cpath d='M31 45V25M30 31C15 34 13 23 13 15c12-1 22 4 17 16ZM33 37c-4-15 7-22 20-21 0 13-7 23-20 21Z' stroke='%23c2f970' stroke-width='3' fill='%23c2f970'/%3E%3C/svg%3E" />
   <link rel="preload" href="assets/smartfarm-botanical.jpg" as="image" />
-  <link rel="stylesheet" href="style.css?v=7" />
+  <link rel="stylesheet" href="style.css?v=8" />
   <script defer src="https://unpkg.com/mqtt@5.15.1/dist/mqtt.min.js"></script>
   <script defer src="app.js?v=7"></script>
+  <script defer src="navigation.js?v=8"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">본문으로 건너뛰기</a>
@@ -30,11 +31,12 @@
   </svg>
   <aside class="rail" aria-label="빠른 탐색">
     <a class="rail-brand" href="./" aria-label="스마트팜 홈"><svg class="icon"><use href="#i-leaf"/></svg></a>
-    <nav>
-      <a class="rail-link is-active" href="#overview" aria-label="농장 현황"><svg class="icon"><use href="#i-grid"/></svg><span>현황</span></a>
-      <a class="rail-link" href="#history" aria-label="수분 추이"><svg class="icon"><use href="#i-chart"/></svg><span>추이</span></a>
+    <nav aria-label="패널 바로가기">
+      <a class="rail-link is-active" href="#soilCard" aria-label="토양 수분" aria-current="location"><svg class="icon"><use href="#i-grid"/></svg><span>토양</span></a>
       <a class="rail-link" href="#waterStatus" aria-label="물통 상태"><svg class="icon"><use href="#i-drop"/></svg><span>물통</span></a>
-      <a class="rail-link" href="#device" aria-label="장치 정보"><svg class="icon"><use href="#i-chip"/></svg><span>장치</span></a>
+      <a class="rail-link" href="#device" aria-label="장치 상태 4개"><svg class="icon"><use href="#i-chip"/></svg><span>장치</span></a>
+      <a class="rail-link" href="#history" aria-label="수분 추이"><svg class="icon"><use href="#i-chart"/></svg><span>추이</span></a>
+      <a class="rail-link" href="#care" aria-label="자동 급수 가이드"><svg class="icon"><use href="#i-leaf"/></svg><span>급수</span></a>
     </nav>
     <span class="rail-bottom">SMART<br>FARM.</span>
   </aside>
@@ -65,20 +67,48 @@
             <div class="water-body"><div class="tank-assembly" aria-hidden="true"><div class="tank-lid"></div><div class="tank-glass"><div class="tank-liquid"></div><div class="tank-scale"></div><svg class="icon"><use href="#i-drop"/></svg></div><div class="tank-base"></div></div><div class="water-copy"><h4 id="waterTitle">상태 확인 중</h4><p id="waterDescription">수위 정보가 도착하면 알려드릴게요.</p></div></div>
             <div class="water-note"><svg class="icon"><use href="#i-drop"/></svg><span>물 부족 시 자동 급수 중단</span></div>
           </section>
-          <section class="panel device-card" id="device" aria-labelledby="device-title">
-            <div class="panel-heading"><div><p class="overline">DEVICE TELEMETRY</p><h3 id="device-title">장치 상태</h3></div><svg class="icon muted-icon"><use href="#i-chip"/></svg></div>
-            <dl class="device-stats"><div><dt><svg class="icon"><use href="#i-pulse"/></svg>마지막 수신</dt><dd id="lastSeen">--</dd></div><div><dt><svg class="icon"><use href="#i-wifi"/></svg>Wi-Fi 신호</dt><dd id="rssiValue">--</dd></div><div><dt><svg class="icon"><use href="#i-clock"/></svg>가동 시간</dt><dd id="uptimeValue">--</dd></div><div><dt><svg class="icon"><use href="#i-drop"/></svg>수분 원시값</dt><dd><span id="soilRaw">--</span><span class="stat-unit"> / 2670</span></dd></div></dl>
-            <div class="device-footer"><span class="device-serial">ESP32</span><span>FARM SENSOR NODE</span></div>
-          </section>
+        </div>
+      </section>
+      <section class="telemetry-section" id="device" aria-labelledby="device-title">
+        <div class="section-bar"><h2 id="device-title"><span>02</span> 장치 상태</h2><p class="telemetry-label"><svg class="icon"><use href="#i-chip"/></svg> ESP32 / TELEMETRY</p></div>
+        <div class="telemetry-grid">
+          <article class="telemetry-card telemetry-received" aria-labelledby="received-title">
+            <div class="telemetry-top"><span class="telemetry-icon"><svg class="icon"><use href="#i-pulse"/></svg></span><span class="telemetry-index">01 / RX</span></div>
+            <div class="telemetry-heading"><p>LAST RECEIVED</p><h3 id="received-title">마지막 수신</h3></div>
+            <strong class="telemetry-value" id="lastSeen">--</strong>
+            <div class="telemetry-footer"><span>마지막 데이터 수신 이후</span><span class="telemetry-code">SYNC</span></div>
+            <svg class="telemetry-watermark icon" aria-hidden="true"><use href="#i-pulse"/></svg>
+          </article>
+          <article class="telemetry-card telemetry-signal" aria-labelledby="signal-title">
+            <div class="telemetry-top"><span class="telemetry-icon"><svg class="icon"><use href="#i-wifi"/></svg></span><span class="telemetry-index">02 / RF</span></div>
+            <div class="telemetry-heading"><p>WIRELESS SIGNAL</p><h3 id="signal-title">Wi-Fi 신호</h3></div>
+            <strong class="telemetry-value" id="rssiValue">--</strong>
+            <div class="telemetry-footer"><span>0에 가까울수록 강한 신호</span><span class="telemetry-code">RSSI</span></div>
+            <svg class="telemetry-watermark icon" aria-hidden="true"><use href="#i-wifi"/></svg>
+          </article>
+          <article class="telemetry-card telemetry-uptime" aria-labelledby="uptime-title">
+            <div class="telemetry-top"><span class="telemetry-icon"><svg class="icon"><use href="#i-clock"/></svg></span><span class="telemetry-index">03 / UP</span></div>
+            <div class="telemetry-heading"><p>DEVICE UPTIME</p><h3 id="uptime-title">가동 시간</h3></div>
+            <strong class="telemetry-value" id="uptimeValue">--</strong>
+            <div class="telemetry-footer"><span>마지막 부팅 이후 가동 시간</span><span class="telemetry-code">TIME</span></div>
+            <svg class="telemetry-watermark icon" aria-hidden="true"><use href="#i-clock"/></svg>
+          </article>
+          <article class="telemetry-card telemetry-raw" aria-labelledby="raw-title">
+            <div class="telemetry-top"><span class="telemetry-icon"><svg class="icon"><use href="#i-drop"/></svg></span><span class="telemetry-index">04 / ADC</span></div>
+            <div class="telemetry-heading"><p>SOIL SENSOR OUTPUT</p><h3 id="raw-title">수분 원시값</h3></div>
+            <div class="telemetry-reading"><strong class="telemetry-value" id="soilRaw">--</strong><span class="telemetry-unit">ADC</span></div>
+            <div class="telemetry-footer"><span>보정 기준 0 → 2670</span><span class="telemetry-code">RAW</span></div>
+            <svg class="telemetry-watermark icon" aria-hidden="true"><use href="#i-drop"/></svg>
+          </article>
         </div>
       </section>
       <div class="bottom-grid">
         <section class="panel chart-card" id="history" aria-labelledby="history-title">
-          <div class="panel-heading"><div><p class="overline"><span class="section-number">02 /</span> MOISTURE ANALYTICS</p><h3 id="history-title">수분의 흐름을 읽다</h3></div><span class="chart-legend"><i></i> 토양 수분 <span class="chart-period">최근 30개</span></span></div>
+          <div class="panel-heading"><div><p class="overline"><span class="section-number">03 /</span> MOISTURE ANALYTICS</p><h3 id="history-title">수분의 흐름을 읽다</h3></div><span class="chart-legend"><i></i> 토양 수분 <span class="chart-period">최근 30개</span></span></div>
           <div class="chart-wrap"><div class="chart-axis" aria-hidden="true"><span>100</span><span>50</span><span>0 <small>%</small></span></div><canvas id="soilChart" role="img" aria-label="이 페이지에서 수신한 최근 토양 수분 변화"></canvas><div class="chart-empty" id="chartEmpty"><svg class="icon"><use href="#i-chart"/></svg><p>변화의 기록이 곧 시작됩니다.</p><span>수분 측정값을 수신하면 그래프에 표시해요.</span></div></div>
           <div class="chart-footer"><span>이 페이지에서 수신한 측정 기록</span><span>최근 <span class="tiny-dot"></span></span></div>
         </section>
-        <section class="panel care-card" aria-labelledby="care-title"><div class="panel-heading"><div><p class="overline">THE WAY WE GROW</p><h3 id="care-title">자동 급수 가이드</h3></div><svg class="icon muted-icon"><use href="#i-leaf"/></svg></div><p class="care-description">필요할 때 물을 주고,<br>흙이 안정될 시간을 기다립니다.</p><div class="care-timing"><div><strong>05<span>초</span></strong><p>최대 급수 시간</p></div><span class="timing-divider"></span><div><strong>60<span>초</span></strong><p>급수 후 안정화</p></div></div><details class="care-details"><summary>급수 판단 기준 <span>+</span></summary><p>수분 원시값 2200 이하에서 시작하고 2650 이상에서 종료합니다. 물 부족 또는 수분 센서 오류 시 자동 급수를 중단합니다.</p></details></section>
+        <section class="panel care-card" id="care" aria-labelledby="care-title"><div class="panel-heading"><div><p class="overline">THE WAY WE GROW</p><h3 id="care-title">자동 급수 가이드</h3></div><svg class="icon muted-icon"><use href="#i-leaf"/></svg></div><p class="care-description">필요할 때 물을 주고,<br>흙이 안정될 시간을 기다립니다.</p><div class="care-timing"><div><strong>05<span>초</span></strong><p>최대 급수 시간</p></div><span class="timing-divider"></span><div><strong>60<span>초</span></strong><p>급수 후 안정화</p></div></div><details class="care-details"><summary>급수 판단 기준 <span>+</span></summary><p>수분 원시값 2200 이하에서 시작하고 2650 이상에서 종료합니다. 물 부족 또는 수분 센서 오류 시 자동 급수를 중단합니다.</p></details></section>
       </div>
     </main>
     <footer><span class="footer-brand">SMARTFARM<span>●</span></span><p>작은 변화를 읽는, 더 나은 농장.</p><a href="#main">BACK TO TOP <span>↑</span></a></footer>

@@ -86,7 +86,7 @@ h1 { font-size: 33px; letter-spacing: -1.5px; font-weight: 650; margin-top: 7px;
 .section-bar h2 > span { color: #7c8b73; font: 10px ui-monospace, monospace; margin-right: 10px; }
 .section-bar > p { font-size: 10px; color: #8d9b88; display: flex; align-items: center; gap: 7px; }
 .section-bar .tiny-dot { width: 3px; height: 3px; background: #7a9063; }
-.overview-grid { display: grid; grid-template-columns: 1.25fr 1fr 1fr; gap: 16px; }
+.overview-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 16px; }
 .panel { min-width: 0; border: 1px solid var(--line); border-radius: 14px; background: linear-gradient(140deg, #1b241a33, transparent 60%), var(--panel); padding: 24px; }
 .panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .panel-heading .overline { font-size: 8px; letter-spacing: 1.6px; }
@@ -141,16 +141,6 @@ h1 { font-size: 33px; letter-spacing: -1.5px; font-weight: 650; margin-top: 7px;
 .water-card[data-state="empty"] .water-copy p { color: #c1aa8a; }
 .water-card[data-state="stale"] .tank-assembly { opacity: .5; }
 .muted-icon { width: 20px; height: 20px; color: #85987d; }
-.device-card { display: flex; flex-direction: column; }
-.device-stats { margin: 20px 0 15px; }
-.device-stats > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid #263025; }
-.device-stats > div:last-child { border: 0; padding-bottom: 4px; }
-.device-stats dt { display: flex; align-items: center; gap: 9px; font-size: 10px; color: #a5b09f; white-space: nowrap; }
-.device-stats dt .icon { width: 14px; height: 14px; color: #788e6e; }
-.device-stats dd { margin: 0; font: 11px/1.5 ui-monospace, "SFMono-Regular", Consolas, "Noto Sans KR", monospace; font-variant-numeric: tabular-nums; text-align: right; }
-.stat-unit { color: #85917d; font-size: 9px; }
-.device-footer { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 8px; font: 6px/1.4 ui-monospace, monospace; letter-spacing: 1.2px; color: #8d9a83; border-top: 1px solid #2d3729; padding-top: 13px; }
-.device-serial { font-size: 7px; border: 1px solid #3a4833; padding: 3px 5px; border-radius: 3px; color: #bdc9ad; letter-spacing: 1px; }
 .bottom-grid { display: grid; grid-template-columns: 2.3fr 1fr; gap: 16px; margin-top: 16px; }
 .chart-card { padding: 25px 27px 22px; }
 .section-number { color: #728567; margin-right: 6px; }
@@ -193,11 +183,6 @@ footer > a > span { color: var(--lime); margin-left: 9px; }
 @media (max-width: 1250px) {
   .app-shell { padding: 0 30px; }
   .overview-grid { grid-template-columns: 1.3fr 1fr; }
-  .device-card { grid-column: 1 / -1; padding: 20px 24px; display: grid; grid-template-columns: 140px 1fr; column-gap: 25px; align-items: center; }
-  .device-stats { margin: 0; display: grid; grid-template-columns: 1fr 1fr 1fr 1.1fr; gap: 16px; }
-  .device-stats > div { display: block; border: 0; padding: 0; }
-  .device-stats dd { text-align: left; margin-top: 8px; font-size: 11px; }
-  .device-footer { grid-column: 1 / -1; margin-top: 17px; padding-top: 11px; }
   .soil-body { min-height: 206px; gap: 18px; }
   .moisture-gauge { width: 184px; height: 184px; }
   .bottom-grid { grid-template-columns: 1.8fr 1fr; }
@@ -261,11 +246,6 @@ footer > a > span { color: var(--lime); margin-left: 9px; }
   .water-copy h4 { font-size: 19px; }
   .water-copy p { font-size: 12px; }
   .water-note { font-size: 10px; }
-  .device-card { display: block; grid-column: auto; }
-  .device-stats { margin: 22px 0 0; grid-template-columns: 1fr 1fr; gap: 21px 16px; }
-  .device-stats dt { font-size: 11px; }
-  .device-stats dd { margin-top: 9px; font-size: 13px; }
-  .device-footer { margin-top: 23px; font-size: 7px; }
   .bottom-grid { grid-template-columns: 1fr; margin-top: 13px; gap: 13px; }
   .chart-card { padding: 24px 23px 22px; }
   .chart-period { display: none; }
@@ -313,5 +293,70 @@ footer > a > span { color: var(--lime); margin-left: 9px; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+
+
+/* Four independent telemetry instruments, in DOM and reading order. */
+@media (min-width: 721px) {
+  .soil-body { min-height: 250px; gap: 26px; }
+  .moisture-gauge { width: 210px; height: 210px; }
+  .soil-number strong { font-size: 48px; }
+  .soil-note p { font-size: 12px; }
+  .water-body { justify-content: flex-start; gap: 30px; padding: 26px 12px; }
+  .water-copy h4 { font-size: 19px; }
+  .water-copy p { font-size: 12px; }
+}
+.telemetry-section { padding-top: 28px; }
+.telemetry-label { font-family: ui-monospace, Consolas, monospace; letter-spacing: 1px; }
+.telemetry-label .icon { width: 13px; height: 13px; }
+.telemetry-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.telemetry-card { --accent: #c2f970; position: relative; isolation: isolate; overflow: hidden; min-width: 0; display: flex; flex-direction: column; padding: 23px; border: 1px solid #34412d; border-radius: 14px; background: radial-gradient(ellipse at 100% 0, #c2f9700b, transparent 65%), #141a16; transition: transform .2s ease, border-color .2s ease; }
+.telemetry-card::before { content: ""; position: absolute; inset: 0 25px auto; height: 1px; background: linear-gradient(90deg, transparent, var(--accent), transparent); opacity: .65; }
+.telemetry-card:hover { transform: translateY(-3px); border-color: var(--accent); }
+.telemetry-signal { --accent: #89d9d0; border-color: #29443e; background: radial-gradient(ellipse at 100% 0, #89d9d00c, transparent 65%), #121d1a; }
+.telemetry-uptime { --accent: #c4b3f4; border-color: #3e3650; background: radial-gradient(ellipse at 100% 0, #c4b3f40c, transparent 65%), #19191f; }
+.telemetry-raw { --accent: #edc18b; border-color: #4a3d2b; background: radial-gradient(ellipse at 100% 0, #edc18b0b, transparent 65%), #1d1b16; }
+.telemetry-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 23px; }
+.telemetry-icon { display: grid; place-items: center; width: 38px; height: 38px; color: var(--accent); border: 1px solid currentColor; border-radius: 11px; background: #ffffff04; }
+.telemetry-icon .icon { width: 19px; height: 19px; }
+.telemetry-index { font: 8px/1.5 ui-monospace, Consolas, monospace; letter-spacing: 1.3px; color: var(--accent); opacity: .75; }
+.telemetry-heading p { color: var(--accent); opacity: .78; font: 7px/1.6 ui-monospace, Consolas, monospace; letter-spacing: 1.6px; }
+.telemetry-heading h3 { font-size: 14px; font-weight: 500; margin-top: 5px; color: #e7eae2; }
+.telemetry-value { display: block; position: relative; z-index: 1; min-width: 0; margin-top: 22px; margin-bottom: 26px; font: 500 clamp(22px, 2.3vw, 35px)/1.4 ui-monospace, Consolas, system-ui, monospace; font-variant-numeric: tabular-nums; letter-spacing: -1.4px; color: #f3f4ef; overflow-wrap: anywhere; }
+.telemetry-reading { display: flex; align-items: baseline; gap: 9px; }
+.telemetry-unit { font: 9px ui-monospace, monospace; color: var(--accent); }
+.telemetry-footer { position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: center; gap: 7px; margin-top: auto; padding-top: 13px; border-top: 1px solid #ffffff12; color: #aab4a4; font-size: 9px; line-height: 1.6; }
+.telemetry-code { font: 6px ui-monospace, monospace; letter-spacing: 1px; color: var(--accent); border: 1px solid #ffffff20; padding: 3px 4px; border-radius: 3px; }
+.telemetry-watermark { position: absolute; z-index: -1; right: -18px; bottom: 50px; width: 115px; height: 115px; color: var(--accent); opacity: .045; stroke-width: .8; transform: rotate(-12deg); }
+.rail-link[aria-current="location"] { background: var(--lime); color: #26351c; }
+#soilCard, #waterStatus, #device, #history, #care { scroll-margin-top: 28px; }
+@media (max-width: 1250px) {
+  .telemetry-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .telemetry-value { font-size: 32px; }
+}
+@media (max-width: 960px) {
+  .rail { width: min(420px, calc(100% - 24px)); }
+  .rail-link { width: clamp(46px, 15vw, 68px); }
+}
+@media (max-width: 720px) {
+  .telemetry-grid { gap: 13px; }
+  .telemetry-card { padding: 19px; }
+  .telemetry-top { margin-bottom: 20px; }
+  .telemetry-value { font-size: clamp(20px, 4.5vw, 30px); letter-spacing: -.9px; margin-top: 18px; margin-bottom: 22px; }
+  .telemetry-code { display: none; }
+  .telemetry-heading p { font-size: 6px; letter-spacing: 1px; }
+  .telemetry-heading h3 { font-size: 13px; }
+  .telemetry-footer { font-size: 9px; }
+}
+@media (max-width: 380px) {
+  .telemetry-grid { grid-template-columns: 1fr; }
+  .telemetry-card { padding: 22px; }
+  .telemetry-value { font-size: 32px; }
+  .telemetry-top { margin-bottom: 18px; }
+  .telemetry-code { display: inline; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .telemetry-card { transition: none; }
+  .telemetry-card:hover { transform: none; }
 }
 
