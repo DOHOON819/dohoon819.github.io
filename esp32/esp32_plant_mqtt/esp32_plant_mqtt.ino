@@ -1,7 +1,5 @@
 #include <WiFi.h>
 #include <PubSubClient.h>
-#include <Wire.h>
-#include <BH1750.h>
 #include "secrets.h"
 
 // ESP32 DevKit V1 센서 및 모터 설정
@@ -9,9 +7,6 @@ constexpr int SOIL_PIN = 34;
 constexpr int MOTOR_PIN = 26;
 constexpr int WATER_LEVEL_PIN = 27;  // 수위 센서: D27
 constexpr int WATER_EMPTY_LEVEL = HIGH;
-constexpr int SDA_PIN = 21;
-constexpr int SCL_PIN = 22;
-constexpr uint8_t BH1750_ADDRESS = 0x23;
 
 // 토양 수분 센서 보정값
 constexpr int DRY_VALUE = 0;
@@ -38,13 +33,11 @@ constexpr unsigned long MQTT_RETRY_INTERVAL_MS = 5000;
 
 WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient);
-BH1750 lightMeter;
 
 unsigned long lastPublishAt = 0;
 unsigned long lastWiFiAttemptAt = 0;
 unsigned long lastMqttAttemptAt = 0;
 unsigned long lastSoilReadingAt = 0;
-bool lightSensorOK = false;
 bool soilReadingReady = false;
 bool soilSensorError = false;  // 오류 발생 시 재시작 전까지 자동 급수 차단
 bool waterEmpty = false;  // 물 부족 시 급수와 측정 중단, 상태 전송은 유지
@@ -200,7 +193,7 @@ void connectMqtt() {
   }
   lastMqttAttemptAt = now;
 
-  String clientId = "esp32-light-" + String((uint32_t)ESP.getEfuseMac(), HEX);
+  String clientId = "esp32-plant-" + String((uint32_t)ESP.getEfuseMac(), HEX);
   Serial.print("MQTT 연결 중...");
 
   const bool connected = mqttClient.connect(
@@ -224,11 +217,6 @@ void connectMqtt() {
 void publishReading() {
   if (!mqttClient.connected()) return;
 
-  const float lux = !waterEmpty && lightSensorOK ? lightMeter.readLightLevel() : -1;
-  if (!waterEmpty && lux < 0) {
-    Serial.println("BH1750 읽기 실패");
-  }
-
   // 물 부족으로 아직 측정하지 못한 값은 0 대신 null로 전송한다.
   char soilRawText[16] = "null";
   char soilPercentText[16] = "null";
@@ -241,8 +229,7 @@ void publishReading() {
   snprintf(
       payload,
       sizeof(payload),
-      "{\"lux\":%.1f,\"soilRaw\":%s,\"soilPercent\":%s,\"waterEmpty\":%s,\"soilSensorError\":%s,\"soilStale\":%s,\"rssi\":%d,\"uptime\":%lu}",
-      lux,
+      "{\"soilRaw\":%s,\"soilPercent\":%s,\"waterEmpty\":%s,\"soilSensorError\":%s,\"soilStale\":%s,\"rssi\":%d,\"uptime\":%lu}",
       soilRawText,
       soilPercentText,
       waterEmpty ? "true" : "false",
@@ -267,11 +254,6 @@ void setup() {
   pinMode(WATER_LEVEL_PIN, INPUT_PULLUP);
   analogReadResolution(12);
   analogSetPinAttenuation(SOIL_PIN, ADC_11db);
-
-  Wire.begin(SDA_PIN, SCL_PIN);
-  lightSensorOK = lightMeter.begin(
-      BH1750::CONTINUOUS_HIGH_RES_MODE, BH1750_ADDRESS);
-  Serial.println(lightSensorOK ? "BH1750 connected!" : "BH1750 connection failed!");
 
   mqttClient.setServer(MQTT_HOST, MQTT_PORT);
   mqttClient.setBufferSize(512);
@@ -312,3 +294,4 @@ void loop() {
   }
   delay(1);
 }
+
