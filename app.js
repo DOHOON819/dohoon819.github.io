@@ -168,7 +168,7 @@ function drawChart() {
   const height = rect.height;
   const padding = 5;
   ctx.clearRect(0, 0, width, height);
-  ctx.strokeStyle = "#e8ebdf";
+  ctx.strokeStyle = "#2a3628";
   ctx.lineWidth = 1;
   for (const fraction of [0, 0.5, 1]) {
     const y = padding + fraction * (height - padding * 2);
@@ -185,8 +185,8 @@ function drawChart() {
     y: height - padding - value / 100 * (height - padding * 2),
   }));
   const gradient = ctx.createLinearGradient(0, 0, 0, height);
-  gradient.addColorStop(0, "rgba(124, 150, 91, 0.23)");
-  gradient.addColorStop(1, "rgba(124, 150, 91, 0.01)");
+  gradient.addColorStop(0, "rgba(194, 249, 112, 0.22)");
+  gradient.addColorStop(1, "rgba(194, 249, 112, 0.005)");
   ctx.beginPath();
   ctx.moveTo(points[0].x, height - padding);
   points.forEach((point) => ctx.lineTo(point.x, point.y));
@@ -199,7 +199,7 @@ function drawChart() {
     if (index === 0) ctx.moveTo(point.x, point.y);
     else ctx.lineTo(point.x, point.y);
   });
-  ctx.strokeStyle = "#7c965b";
+  ctx.strokeStyle = "#c2f970";
   ctx.lineWidth = 2.5;
   ctx.lineJoin = "round";
   ctx.lineCap = "round";
@@ -207,7 +207,7 @@ function drawChart() {
   const last = points.at(-1);
   ctx.beginPath();
   ctx.arc(last.x, last.y, 4, 0, Math.PI * 2);
-  ctx.fillStyle = "#6d884c";
+  ctx.fillStyle = "#d8ffa1";
   ctx.fill();
   canvas.setAttribute("aria-label", `최근 토양 수분 ${readings.length}개. 마지막 ${readings.at(-1)}%.`);
 }

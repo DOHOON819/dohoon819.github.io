@@ -3,68 +3,85 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#f5f5ed" />
-  <meta name="description" content="내 식물의 토양 수분과 물통 상태를 한눈에 확인하는 작은 정원 대시보드" />
-  <title>잎새 · 내 식물의 오늘</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%23234133'/%3E%3Cpath d='M17 44C12 22 30 16 49 14c0 24-11 37-27 30l18-21z' fill='%23d9e8a8'/%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="style.css?v=6" />
+  <meta name="theme-color" content="#0c100e" />
+  <meta name="description" content="스마트팜 — 토양 수분과 물통 상태를 실시간으로 살펴보는 나만의 농장 모니터링." />
+  <title>스마트팜 · 실시간 농장 모니터링</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%230c100e'/%3E%3Cpath d='M31 45V25M30 31C15 34 13 23 13 15c12-1 22 4 17 16ZM33 37c-4-15 7-22 20-21 0 13-7 23-20 21Z' stroke='%23c2f970' stroke-width='3' fill='%23c2f970'/%3E%3C/svg%3E" />
+  <link rel="preload" href="assets/smartfarm-botanical.jpg" as="image" />
+  <link rel="stylesheet" href="style.css?v=7" />
   <script defer src="https://unpkg.com/mqtt@5.15.1/dist/mqtt.min.js"></script>
-  <script defer src="app.js?v=6"></script>
+  <script defer src="app.js?v=7"></script>
 </head>
 <body>
-  <div class="page-shell">
+  <a class="skip-link" href="#main">본문으로 건너뛰기</a>
+  <svg class="icon-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs>
+      <symbol id="i-leaf" viewBox="0 0 32 32"><path d="M15 27V13M15 18C5 20 4 12 4 6c8-1 15 3 11 12ZM17 22c-3-10 5-15 13-14 0 9-4 15-13 14Z"/></symbol>
+      <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
+      <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v18h18M6 15l5-5 4 3 6-8"/></symbol>
+      <symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 3C10 7 5 12 5 16a7 7 0 0 0 14 0c0-4-5-9-7-13Z"/><path d="M8 16a4 4 0 0 0 4 4"/></symbol>
+      <symbol id="i-chip" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="3"/><rect x="9" y="9" width="6" height="6" rx="1"/><path d="M9 2v3m6-3v3m-6 14v3m6-3v3M2 9h3m-3 6h3m14-6h3m-3 6h3"/></symbol>
+      <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></symbol>
+      <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5M5 8a8 8 0 0 1 13-3l2 3M4 16l2 3a8 8 0 0 0 13-3"/></symbol>
+      <symbol id="i-wifi" viewBox="0 0 24 24"><path d="M3 8a14 14 0 0 1 18 0M6 12a9 9 0 0 1 12 0m-9 4a4 4 0 0 1 6 0"/><circle cx="12" cy="20" r=".6"/></symbol>
+      <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+      <symbol id="i-pulse" viewBox="0 0 24 24"><path d="M2 12h5l3-8 4 16 3-8h5"/></symbol>
+    </defs>
+  </svg>
+  <aside class="rail" aria-label="빠른 탐색">
+    <a class="rail-brand" href="./" aria-label="스마트팜 홈"><svg class="icon"><use href="#i-leaf"/></svg></a>
+    <nav>
+      <a class="rail-link is-active" href="#overview" aria-label="농장 현황"><svg class="icon"><use href="#i-grid"/></svg><span>현황</span></a>
+      <a class="rail-link" href="#history" aria-label="수분 추이"><svg class="icon"><use href="#i-chart"/></svg><span>추이</span></a>
+      <a class="rail-link" href="#waterStatus" aria-label="물통 상태"><svg class="icon"><use href="#i-drop"/></svg><span>물통</span></a>
+      <a class="rail-link" href="#device" aria-label="장치 정보"><svg class="icon"><use href="#i-chip"/></svg><span>장치</span></a>
+    </nav>
+    <span class="rail-bottom">SMART<br>FARM.</span>
+  </aside>
+  <div class="app-shell">
     <header class="topbar">
-      <a class="brand" href="./" aria-label="잎새 홈"><span class="brand-icon" aria-hidden="true">↗</span> 잎새<span class="brand-caption">MY LITTLE GARDEN</span></a>
-      <div class="connection" id="connection" data-state="connecting" role="status"><span class="connection-dot" aria-hidden="true"></span><span id="connectionText">연결 중</span></div>
+      <a class="wordmark" href="./"><svg class="icon"><use href="#i-leaf"/></svg>SMART<span>FARM</span><span class="wordmark-dot"></span></a>
+      <div class="topbar-end"><span class="workspace-label">MY GROWING SPACE</span><div class="connection" id="connection" data-state="connecting" role="status"><span class="status-dot"></span><span id="connectionText">연결 중</span></div></div>
     </header>
-    <main>
-      <section class="intro" aria-labelledby="page-title">
-        <div><p class="eyebrow">A LITTLE CARE, EVERY DAY</p><h1 id="page-title">내 식물의 오늘<span class="title-dot">.</span></h1><p class="intro-description">잘 자라는 하루를 위해,<br class="mobile-break" /> 흙과 물의 안부를 살펴보세요.</p></div>
-        <div class="intro-note"><span class="small-leaf" aria-hidden="true"></span><span>작은 관심으로<br /><strong>더 푸르게 자라요.</strong></span></div>
+    <main id="main">
+      <section class="page-heading"><div><p class="overline">YOUR PERSONAL GROWING SYSTEM</p><h1>스마트팜<span class="heading-dot">.</span></h1></div><button class="reconnect-button" id="reconnectButton" type="button"><svg class="icon"><use href="#i-refresh"/></svg><span>다시 연결</span></button></section>
+      <section class="hero" aria-labelledby="hero-title">
+        <img class="hero-photo" src="assets/smartfarm-botanical.jpg" alt="" width="1536" height="1024" fetchpriority="high" />
+        <div class="hero-shade" aria-hidden="true"></div>
+        <div class="hero-copy"><p class="hero-kicker"><span></span> CULTIVATE TOMORROW</p><h2 id="hero-title">더 정밀하게.<br><span>더 푸르게.</span></h2><p class="hero-description">매 순간의 변화를 읽고,<br>당신의 농장을 한눈에 살펴보세요.</p><a class="hero-link" href="#overview">내 농장 살펴보기<svg class="icon"><use href="#i-arrow"/></svg></a></div>
+        <div class="hero-reticle" aria-hidden="true"><span class="reticle-corner"></span><span class="reticle-center">+</span><span class="reticle-label">NATURE × TECHNOLOGY</span></div>
+        <div class="hero-coordinate" aria-hidden="true">SMART FARM / BOTANICAL STUDY <span>01—</span></div>
       </section>
-      <div class="garden-grid">
-        <section class="soil-card card" id="soilCard" data-state="waiting" aria-labelledby="soil-title">
-          <div class="section-heading"><div><p class="eyebrow">SOIL MOISTURE</p><h2 id="soil-title">흙은 얼마나 촉촉할까요?</h2></div><span class="state-tag" id="soilState">측정 대기</span></div>
-          <div class="soil-main">
-            <div class="moisture-gauge" id="moistureGauge" style="--moisture:0"><div class="gauge-center"><span class="gauge-label">토양 수분</span><div class="soil-number"><strong id="soilPercent">--</strong><span>%</span></div><span class="gauge-caption">지금, 우리 식물의 흙</span></div></div>
-            <svg class="plant-art" viewBox="0 0 230 260" fill="none" aria-hidden="true">
-              <ellipse cx="119" cy="244" rx="77" ry="11" fill="#dce2d1"/>
-              <path d="M116 190C114 142 140 109 124 48M119 152C92 130 75 104 64 78M119 128C153 116 168 93 176 70" stroke="#456843" stroke-width="5" stroke-linecap="round"/>
-              <path d="M125 83C92 77 91 46 104 23C130 30 147 54 125 83Z" fill="#77965a"/>
-              <path d="M101 128C68 135 42 108 40 80C73 73 101 91 101 128Z" fill="#a3b77e"/>
-              <path d="M134 123C130 88 158 66 192 61C195 93 172 125 134 123Z" fill="#52754b"/>
-              <path d="M118 171C79 174 58 152 54 130C87 121 113 135 118 171Z" fill="#648550"/>
-              <path d="M124 161C123 134 153 119 178 125C177 150 152 170 124 161Z" fill="#9fb977"/>
-              <path d="M77 183H160L150 237C148 248 91 248 88 237L77 183Z" fill="#c58968"/>
-              <path d="M120 185H160L150 237C148 243 133 246 120 246V185Z" fill="#b87959"/>
-              <rect x="70" y="178" width="96" height="17" rx="6" fill="#d59c7b"/>
-              <path d="M92 207L97 233" stroke="#dfad8f" stroke-width="4" stroke-linecap="round"/>
-              <path d="M186 176L190 167M194 180L204 177" stroke="#9eae80" stroke-width="3" stroke-linecap="round"/>
-            </svg>
-          </div>
-          <p class="soil-description" id="soilDescription" role="status">첫 수분 측정값을 기다리고 있어요.</p>
-          <div class="moisture-track" aria-hidden="true"><span id="moistureFill"></span></div>
-          <div class="range-labels"><span>건조함</span><span>촉촉함</span></div>
+      <section class="overview-section" id="overview" aria-labelledby="overview-title">
+        <div class="section-bar"><h2 id="overview-title"><span>01</span> 농장 현황</h2><p><span class="tiny-dot"></span> 약 5초 간격으로 데이터 수신</p></div>
+        <div class="overview-grid">
+          <section class="panel soil-card" id="soilCard" data-state="waiting" aria-labelledby="soil-title">
+            <div class="panel-heading"><div><p class="overline">SOIL MOISTURE</p><h3 id="soil-title">토양 수분</h3></div><span class="state-tag" id="soilState">측정 대기</span></div>
+            <div class="soil-body"><div class="moisture-gauge" id="moistureGauge" style="--moisture:0"><div class="gauge-core"><svg class="icon gauge-drop"><use href="#i-drop"/></svg><div class="soil-number"><strong id="soilPercent">--</strong><span>%</span></div><span class="gauge-caption">MOISTURE LEVEL</span></div><span class="gauge-min">0</span><span class="gauge-max">100</span></div><div class="soil-note"><span class="note-marker"></span><p id="soilDescription" role="status">첫 수분 측정값을 기다리고 있어요.</p></div></div>
+            <div class="moisture-track" aria-hidden="true"><span id="moistureFill"></span></div><div class="range-labels"><span>DRY</span><span>WET</span></div>
+          </section>
+          <section class="panel water-card" id="waterStatus" data-state="unknown" aria-labelledby="water-section-title" aria-live="polite" aria-atomic="true">
+            <div class="panel-heading"><div><p class="overline">WATER RESERVE</p><h3 id="water-section-title">물통 상태</h3></div><span class="water-indicator" aria-hidden="true"></span></div>
+            <div class="water-body"><div class="tank-assembly" aria-hidden="true"><div class="tank-lid"></div><div class="tank-glass"><div class="tank-liquid"></div><div class="tank-scale"></div><svg class="icon"><use href="#i-drop"/></svg></div><div class="tank-base"></div></div><div class="water-copy"><h4 id="waterTitle">상태 확인 중</h4><p id="waterDescription">수위 정보가 도착하면 알려드릴게요.</p></div></div>
+            <div class="water-note"><svg class="icon"><use href="#i-drop"/></svg><span>물 부족 시 자동 급수 중단</span></div>
+          </section>
+          <section class="panel device-card" id="device" aria-labelledby="device-title">
+            <div class="panel-heading"><div><p class="overline">DEVICE TELEMETRY</p><h3 id="device-title">장치 상태</h3></div><svg class="icon muted-icon"><use href="#i-chip"/></svg></div>
+            <dl class="device-stats"><div><dt><svg class="icon"><use href="#i-pulse"/></svg>마지막 수신</dt><dd id="lastSeen">--</dd></div><div><dt><svg class="icon"><use href="#i-wifi"/></svg>Wi-Fi 신호</dt><dd id="rssiValue">--</dd></div><div><dt><svg class="icon"><use href="#i-clock"/></svg>가동 시간</dt><dd id="uptimeValue">--</dd></div><div><dt><svg class="icon"><use href="#i-drop"/></svg>수분 원시값</dt><dd><span id="soilRaw">--</span><span class="stat-unit"> / 2670</span></dd></div></dl>
+            <div class="device-footer"><span class="device-serial">ESP32</span><span>FARM SENSOR NODE</span></div>
+          </section>
+        </div>
+      </section>
+      <div class="bottom-grid">
+        <section class="panel chart-card" id="history" aria-labelledby="history-title">
+          <div class="panel-heading"><div><p class="overline"><span class="section-number">02 /</span> MOISTURE ANALYTICS</p><h3 id="history-title">수분의 흐름을 읽다</h3></div><span class="chart-legend"><i></i> 토양 수분 <span class="chart-period">최근 30개</span></span></div>
+          <div class="chart-wrap"><div class="chart-axis" aria-hidden="true"><span>100</span><span>50</span><span>0 <small>%</small></span></div><canvas id="soilChart" role="img" aria-label="이 페이지에서 수신한 최근 토양 수분 변화"></canvas><div class="chart-empty" id="chartEmpty"><svg class="icon"><use href="#i-chart"/></svg><p>변화의 기록이 곧 시작됩니다.</p><span>수분 측정값을 수신하면 그래프에 표시해요.</span></div></div>
+          <div class="chart-footer"><span>이 페이지에서 수신한 측정 기록</span><span>최근 <span class="tiny-dot"></span></span></div>
         </section>
-        <section class="water-card card" id="waterStatus" data-state="unknown" aria-labelledby="waterTitle" aria-live="polite" aria-atomic="true">
-          <div class="water-top"><p class="eyebrow">WATER TANK</p><span class="water-status-dot" aria-hidden="true"></span></div>
-          <div class="tank-illustration" aria-hidden="true"><div class="tank-water"></div><span class="tank-mark mark-one"></span><span class="tank-mark mark-two"></span><span class="tank-mark mark-three"></span><svg viewBox="0 0 40 50"><path d="M20 3C16 12 6 23 6 32a14 14 0 0 0 28 0C34 23 24 12 20 3Z" fill="currentColor"/></svg></div>
-          <div class="water-copy"><h2 id="waterTitle">물통 상태 확인 중</h2><p id="waterDescription">수위 정보가 도착하면 알려드릴게요.</p></div>
-          <div class="water-footnote"><span aria-hidden="true">↳</span> 물 부족 시 자동 급수를 멈춰요.</div>
-        </section>
-        <section class="chart-card card" aria-labelledby="history-title">
-          <div class="section-heading"><div><p class="eyebrow">A MOMENT IN THE GARDEN</p><h2 id="history-title">수분의 작은 변화</h2></div><span class="chart-legend"><i aria-hidden="true"></i> 토양 수분</span></div>
-          <div class="chart-wrap"><div class="chart-axis" aria-hidden="true"><span>100%</span><span>50%</span><span>0%</span></div><canvas id="soilChart" role="img" aria-label="이 페이지에서 수신한 최근 토양 수분 변화"></canvas><p class="chart-empty" id="chartEmpty">측정값이 도착하면 여기에 기록돼요.</p></div>
-          <div class="chart-footer"><span>이 페이지에서 수신한 최근 30개</span><span>지금</span></div>
-        </section>
-        <section class="details-card card" aria-labelledby="device-title">
-          <div class="section-heading"><div><p class="eyebrow">CONNECTED TO YOUR PLANT</p><h2 id="device-title">센서의 안부</h2></div><span class="device-icon" aria-hidden="true">⌁</span></div>
-          <dl class="device-stats"><div><dt>마지막 수신</dt><dd id="lastSeen">--</dd></div><div><dt>Wi-Fi 신호</dt><dd id="rssiValue">--</dd></div><div><dt>가동 시간</dt><dd id="uptimeValue">--</dd></div><div><dt>수분 원시값</dt><dd><span id="soilRaw">--</span><span class="muted"> / 2670</span></dd></div></dl>
-          <details class="care-details"><summary>자동 급수 기준 보기 <span aria-hidden="true">+</span></summary><p>원시값 2200 이하에서 시작하고, 2650 이상에서 종료해요. 최대 5초 급수 후 60초간 흙의 수분이 퍼지기를 기다려요.</p></details>
-        </section>
+        <section class="panel care-card" aria-labelledby="care-title"><div class="panel-heading"><div><p class="overline">THE WAY WE GROW</p><h3 id="care-title">자동 급수 가이드</h3></div><svg class="icon muted-icon"><use href="#i-leaf"/></svg></div><p class="care-description">필요할 때 물을 주고,<br>흙이 안정될 시간을 기다립니다.</p><div class="care-timing"><div><strong>05<span>초</span></strong><p>최대 급수 시간</p></div><span class="timing-divider"></span><div><strong>60<span>초</span></strong><p>급수 후 안정화</p></div></div><details class="care-details"><summary>급수 판단 기준 <span>+</span></summary><p>수분 원시값 2200 이하에서 시작하고 2650 이상에서 종료합니다. 물 부족 또는 수분 센서 오류 시 자동 급수를 중단합니다.</p></details></section>
       </div>
     </main>
-    <footer><span class="footer-note"><span class="connection-dot" aria-hidden="true"></span> 약 5초 간격으로 새 소식을 받아요.</span><button type="button" id="reconnectButton"><span aria-hidden="true">↻</span> 다시 연결</button></footer>
+    <footer><span class="footer-brand">SMARTFARM<span>●</span></span><p>작은 변화를 읽는, 더 나은 농장.</p><a href="#main">BACK TO TOP <span>↑</span></a></footer>
   </div>
 </body>
 </html>
