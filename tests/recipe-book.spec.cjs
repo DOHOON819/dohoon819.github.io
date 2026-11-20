@@ -214,6 +214,11 @@ function mockBackend() {
   assert.equal(await page.evaluate(()=>window.__recipeTest.recipe_ingredients.filter(x=>x.recipe_id===window.__recipeTest.recipes.at(-1).id).length),0);
   assert.equal(await page.evaluate(()=>window.__recipeTest.recipe_steps.filter(x=>x.recipe_id===window.__recipeTest.recipes.at(-1).id).length),0);
   assert.equal(await page.evaluate(()=>window.__recipeTest.uploads.length),0);
+  assert.equal(await page.locator('[data-delete-recipe-id]').count(),1,'only the current browser owner sees a card delete button');
+  page.once('dialog',dialog=>dialog.accept());
+  await page.locator('[data-delete-recipe-id]').click();
+  await page.waitForFunction(()=>document.querySelectorAll('.recipe-card').length===3);
+  assert.equal(await page.evaluate(()=>window.__recipeTest.recipes.some(x=>x.title==='Fast tomato toast with olive oil and a little salt.')),false,'card delete removes the owned recipe');
   // Backend failure must not leave an incomplete public recipe.
   await page.locator('#openComposer').click();
   await page.locator('.optional-recipe-details summary').click();
