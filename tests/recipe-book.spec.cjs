@@ -1,0 +1,267 @@
+const http = require('node:http');
+const fs = require('node:fs');
+const path = require('node:path');
+const assert = require('node:assert/strict');
+const { chromium } = require(process.env.RECIPE_BOOK_PLAYWRIGHT || 'playwright');
+const root = path.resolve(process.env.RECIPE_BOOK_ROOT || path.resolve(__dirname, '..'));
+const out = path.resolve(process.env.RECIPE_BOOK_TEST_OUTPUT || 'test-results');
+fs.mkdirSync(out, { recursive: true });
+const types = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml' };
+const server = http.createServer((req, res) => {
+  const file = path.resolve(root, '.' + decodeURIComponent(new URL(req.url, 'http://localhost').pathname === '/' ? '/index.html' : new URL(req.url, 'http://localhost').pathname));
+  if (!file.startsWith(root + path.sep)) { res.writeHead(403).end(); return; }
+  fs.readFile(file, (err, data) => { if (err) res.writeHead(404).end(); else { res.setHeader('Content-Type', types[path.extname(file)] || 'application/octet-stream'); res.end(data); } });
+});
+function mockBackend() {
+  const sample = [
+    { id:'photo-one', author_id:'other', title:'Tomato & basil pasta', category:'면·파스타', cook_minutes:20, difficulty:'쉬움', image_url:'/assets/recipe-book-logo.png', video_url:null },
+    { id:'video-one', author_id:'other', title:'A quick Korean bowl', category:'한식', cook_minutes:15, difficulty:'쉬움', image_url:null, video_url:'https://example.test/test.webm' },
+    { id:'dessert-one', author_id:'other', title:'Weekend chocolate cake', category:'디저트', cook_minutes:55, difficulty:'보통', image_url:'/assets/recipe-book-logo.png', video_url:null }
+  ].map((r, i) => ({ ...r, image_url:r.image_url ? location.origin + r.image_url : null, description:'Test fixture, never published.', servings:2, visibility:'published', image_fit:'cover', created_at:'2026-11-' + (15-i) + 'T12:00:00Z', profiles:{display_name:'Test kitchen'}, recipe_ingredients:[{position:0,item:'Tomatoes',quantity:'200 g'}], recipe_steps:[{position:0,instruction:'Prepare the ingredients.'},{position:1,instruction:'Cook and serve.'}] }));
+  const data = window.__recipeTest = { recipes:sample, profiles:[{id:'test-user',display_name:'Test Chef'}], recipe_ingredients:[], recipe_steps:[], uploads:[], removals:[], failChildren:false, failFeed:false, session:null };
+  const session = { user:{id:'test-user'}, access_token:'test-only' };
+  data.session = session;
+  function query(table) {
+    let action='select', payload, filters=[], one=false;
+    const api = {
+      select(){return api;}, order(){return api;}, eq(k,v){filters.push([k,v]);return api;},
+      insert(v){action='insert';payload=v;return api;},update(v){action='update';payload=v;return api;},
+      delete(){action='delete';return api;},single(){one=true;return api;},maybeSingle(){one=true;return api;},
+      then(resolve,reject){return Promise.resolve().then(()=>{
+        if(table==='recipes' && action==='select' && data.failFeed) return {data:null,error:{message:'Network failed'}};
+        if(data.failChildren && table==='recipe_steps' && action==='insert') return {data:null,error:{message:'Test step failure'}};
+        let rows=data[table] || (data[table]=[]);
+        if(action==='insert') {
+          if(table==='profiles' && payload.display_name.toLowerCase()==='taken') return {data:null,error:{code:'23505',message:'duplicate'}};
+          const added=(Array.isArray(payload)?payload:[payload]).map(x=>({...x,id:x.id || ('test-' + Math.random().toString(16).slice(2)),created_at:new Date().toISOString()}));
+          rows.push(...added); return {data:one?added[0]:added,error:null};
+        }
+        const matches = row=>filters.every(([k,v])=>row[k]===v);
+        const selected=rows.filter(matches);
+        if(action==='update') {
+          if(table==='profiles' && payload.display_name.toLowerCase()==='taken') return {data:null,error:{code:'23505',message:'duplicate'}};
+          selected.forEach(row=>Object.assign(row,payload));
+        }
+        if(action==='delete') data[table]=rows.filter(row=>!matches(row));
+        return {data:one?(selected[0]||null):selected.map(row=>table==='recipes'?{...row,profiles:row.profiles || {display_name:'Test Chef'},recipe_ingredients:row.recipe_ingredients || data.recipe_ingredients.filter(x=>x.recipe_id===row.id),recipe_steps:row.recipe_steps || data.recipe_steps.filter(x=>x.recipe_id===row.id)}:row),error:null};
+      }).then(resolve,reject);}
+    }; return api;
+  }
+  window.__mockClient = {
+    from:query,
+    auth:{getSession:async()=>({data:{session:data.session},error:null}),signInAnonymously:async()=>{data.session=session;return {data:{session},error:null};},onAuthStateChange(){return {data:{subscription:{unsubscribe(){}}}};}},
+    storage:{from:bucket=>({getPublicUrl:p=>({data:{publicUrl:location.origin+'/assets/recipe-book-logo.png'}}),remove:async p=>{data.removals.push({bucket,paths:p});return {error:null};}})}
+  };
+}
+(async()=>{
+  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+  const origin='http://127.0.0.1:'+server.address().port;
+  const browser=await chromium.launch({headless:true, ...(process.env.RECIPE_BOOK_BROWSER ? {executablePath:process.env.RECIPE_BOOK_BROWSER} : {})});
+  const context=await browser.newContext({viewport:{width:1440,height:1050}});
+  await context.route('**/fonts.googleapis.com/**',route=>route.continue());
+  await context.addInitScript(mockBackend);
+  await context.route('**/supabase-js@2/+esm',route=>route.fulfill({contentType:'text/javascript',body:'export function createClient(){return window.__mockClient;}'}));
+  await context.route('**/nostr-tools@2/+esm',route=>route.fulfill({contentType:'text/javascript',body:'export const generateSecretKey=()=>new Uint8Array(32); export const getPublicKey=()=>"test"; export const finalizeEvent=x=>x; export const verifyEvent=()=>true;'}));
+  await context.route('**/tus.min.js',route=>route.fulfill({contentType:'text/javascript',body:'window.tus={Upload:class{constructor(file,opts){this.opts=opts;} start(){window.__recipeTest.uploads.push(this.opts.metadata);this.opts.onProgress(100,100);this.opts.onSuccess();}}};'}));
+  await context.route('https://example.test/**',route=>route.fulfill({status:204,body:''}));
+  const page=await context.newPage();
+  const errors=[];page.on('pageerror',error=>errors.push(error.message));
+  await page.goto(origin,{waitUntil:'networkidle'});
+  await page.locator('.recipe-card').first().waitFor();
+  assert.equal(await page.title(),'Recipe Story — Good food. Worth sharing.');
+  assert.equal((await page.locator('.brand').innerText()).trim(),'Recipe Story.');
+  assert.equal(await page.locator('link[rel="canonical"]').getAttribute('href'),'https://dohoon819.github.io/');
+  assert.match(await page.locator('meta[name="robots"]').getAttribute('content'),/index,follow/);
+  const structuredData=JSON.parse(await page.locator('script[type="application/ld+json"]').textContent());
+  assert.equal(structuredData.name,'Recipe Story');
+  assert.deepEqual(structuredData.inLanguage,['en','en-AU','ko','ja','fr','it','hi','es-MX','zh-CN','ar']);
+  const seoFiles=await page.evaluate(async()=>({verification:await fetch('google6bf2038a52595488.html').then(r=>r.text()),sitemap:await fetch('sitemap.xml').then(r=>r.text()),robots:await fetch('robots.txt').then(r=>r.text())}));
+  assert.equal(seoFiles.verification.trim(),'google-site-verification: google6bf2038a52595488.html');
+  assert.match(seoFiles.sitemap,/https:\/\/dohoon819\.github\.io\//);
+  assert.match(seoFiles.robots,/Sitemap: https:\/\/dohoon819\.github\.io\/sitemap\.xml/);
+  assert.equal(await page.locator('#languageSelect').count(),1);
+  await page.locator('#languageSelect').selectOption('ko');
+  assert.equal(await page.locator('html').getAttribute('lang'),'ko');
+  assert.match(await page.locator('#heroTitle').innerText(),/맛있는 레시피/);
+  assert.match(await page.locator('#openComposer').innerText(),/레시피 올리기/);
+  assert.match(await page.locator('#composerTitle').innerText(),/나만의 레시피/);
+  assert.match(await page.locator('.media-feed-tabs').innerText(),/전체/);
+  assert.match(await page.locator('.recipe-card').first().innerText(),/면·파스타/);
+  await page.locator('#languageSelect').selectOption('ja');
+  assert.equal(await page.locator('html').getAttribute('lang'),'ja');
+  assert.match(await page.locator('#heroTitle').innerText(),/おいしい料理/);
+  assert.match(await page.locator('#openComposer').innerText(),/レシピを投稿/);
+  assert.match(await page.locator('#composerTitle').innerText(),/おいしい物語/);
+  assert.match(await page.locator('.media-feed-tabs').innerText(),/すべて/);
+  await page.reload();
+  assert.equal(await page.locator('html').getAttribute('lang'),'ja');
+  await page.locator('#languageSelect').selectOption('en');
+  assert.equal(await page.locator('.recipe-card').count(),3);
+  assert.equal(await page.locator('#recipeCategory option').count(),18);
+  const categoryOrder=await page.locator('.category-nav [data-category]').evaluateAll(buttons=>buttons.map(button=>button.dataset.category));
+  assert.deepEqual(categoryOrder.slice(categoryOrder.indexOf('인도식'),categoryOrder.indexOf('인도식')+4),['인도식','아랍식','호주식','브런치']);
+  assert.equal(new Set(categoryOrder).size,categoryOrder.length);
+  await page.locator('[data-media-filter="recent"]').click();
+  assert.equal(await page.locator('.recipe-card').count(),0);
+  assert.match(await page.locator('#emptyTitle').innerText(),/recently viewed/);
+  await page.locator('[data-media-filter="all"]').click();
+  for(const id of ['photo-one','dessert-one','photo-one']) {
+    await page.locator('[data-recipe-id="'+id+'"]').first().click();
+    await page.locator('[data-close-dialog="detailDialog"]').click();
+  }
+  await page.locator('[data-media-filter="recent"]').click();
+  assert.equal(await page.locator('.recipe-card').count(),2);
+  assert.match(await page.locator('.recipe-card').first().innerText(),/Tomato/);
+  assert.equal(await page.locator('#sortFilter').isDisabled(),true);
+  await page.locator('[data-recipe-id="dessert-one"]').first().click();
+  await page.locator('[data-close-dialog="detailDialog"]').click();
+  assert.match(await page.locator('.recipe-card').first().innerText(),/Weekend/);
+  const historyBeforeLanguage=await page.evaluate(()=>localStorage.getItem('recipe-book:recent:v1'));
+  for(const language of ['ko','ja','fr','it','hi','es-MX','zh-CN','ar']) {
+    await page.locator('#languageSelect').selectOption(language);
+    assert.notEqual(await page.locator('[data-media-filter="recent"]').innerText(),'Recent');
+    assert.notEqual(await page.locator('#clearHistory').innerText(),'Clear viewing history');
+  }
+  assert.equal(await page.evaluate(()=>localStorage.getItem('recipe-book:recent:v1')),historyBeforeLanguage);
+  await page.locator('#languageSelect').selectOption('en');
+  await page.reload({waitUntil:'networkidle'});
+  await page.locator('[data-media-filter="recent"]').click();
+  assert.equal(await page.locator('.recipe-card').count(),2);
+  assert.match(await page.locator('.recipe-card').first().innerText(),/Weekend/);
+  await page.locator('[data-remove-history="photo-one"]').click();
+  assert.equal(await page.locator('.recipe-card').count(),1);
+  await page.locator('[data-save-id="dessert-one"]').click();
+  await page.setViewportSize({width:390,height:844});
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+  await page.screenshot({path:path.join(out,'recent-mobile.png'),fullPage:true});
+  page.once('dialog',dialog=>dialog.accept());await page.locator('#clearHistory').click();
+  assert.equal(await page.locator('.recipe-card').count(),0);
+  assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('recipe-book:recent:v1'))),[]);
+  await page.locator('[data-media-filter="saved"]').click();
+  assert.equal(await page.locator('.recipe-card').count(),1,'clearing history preserves bookmarks');
+  await page.locator('[data-save-id="dessert-one"]').click();
+  await page.setViewportSize({width:1440,height:1050});
+  await page.locator('[data-media-filter="all"]').click();
+  await page.locator('[data-open-shorts]').first().click();
+  assert.equal(await page.locator('#shortsDialog .short-slide').count(),1,'Shorts contains video recipes only');
+  assert.equal(await page.locator('#shortsDialog .short-slide video').count(),1);
+  assert.equal(await page.locator('#shortsDialog .short-slide img, #shortsDialog .short-text-recipe').count(),0);
+  await page.screenshot({path:path.join(out,'video-only-shorts.png')});
+  await page.locator('[data-close-shorts]').click();
+  for (const category of ['일식','중식','멕시칸','아메리칸','프렌치','이탈리안','브런치','도시락','간편식']) assert.equal(await page.locator(`#recipeCategory option[value="${category}"]`).count(),1);
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+  await page.screenshot({path:path.join(out,'desktop.png'),fullPage:true});
+  await page.locator('[data-media-filter="video"]').click();
+  assert.equal(await page.locator('.recipe-card').count(),1);
+  assert.match(await page.locator('.recipe-card').innerText(),/Korean/);
+  await page.locator('[data-media-filter="image"]').click();
+  assert.equal(await page.locator('.recipe-card').count(),2);
+  await page.locator('[data-save-id="photo-one"]').click();
+  await page.locator('[data-media-filter="saved"]').click();
+  assert.equal(await page.locator('.recipe-card').count(),1);
+  assert.match(await page.locator('#feedSubtitle').innerText(),/this device/);
+  await page.reload({waitUntil:'networkidle'});
+  await page.locator('[data-media-filter="saved"]').click();
+  assert.equal(await page.locator('.recipe-card').count(),1);
+  await page.locator('[data-view="all"]').first().click();
+  await page.locator('#filtersButton').click();
+  await page.locator('#timeFilter').selectOption('30');
+  await page.locator('#categoryFilter').selectOption('면·파스타');
+  assert.equal(await page.locator('.recipe-card').count(),1);
+  await page.locator('#searchInput').fill('missing ingredient');
+  assert.equal(await page.locator('.recipe-card').count(),0);
+  await page.locator('#emptyClearButton').click();
+  assert.equal(await page.locator('.recipe-card').count(),3);
+  await page.locator('#sortFilter').selectOption('quickest');
+  assert.match(await page.locator('.recipe-card').first().innerText(),/Korean/);
+  await page.locator('[data-recipe-id="photo-one"]').first().click();
+  await page.locator('#shareRecipeButton').click();
+  assert.equal(await page.locator('#shareDialog').isVisible(),true);
+  assert.match(await page.locator('#shareLink').inputValue(),/\?recipe=photo-one#feed$/);
+  await page.locator('#copyShareLink').click();
+  await page.waitForFunction(()=>document.querySelector('#shareMessage').textContent.trim().length>0);
+  assert.match(await page.locator('#shareMessage').innerText(),/Link copied|link is selected/);
+  await page.locator('[data-close-dialog="shareDialog"]').click();
+  await page.locator('.ingredient-checklist input').check();
+  assert.equal(await page.locator('.ingredient-checklist input').isChecked(),true);
+  await page.locator('#cookModeButton').click();
+  assert.equal(await page.locator('#detailDialog').evaluate(el=>el.classList.contains('cook-mode')),true);
+  await page.locator('[data-close-dialog="detailDialog"]').click();
+  await page.locator('#openComposer').click();
+  await page.locator('#composerDialog').waitFor({state:'visible'});
+  assert.equal(await page.locator('#authorName').inputValue(),'Test Chef');
+  assert.equal(await page.locator('#recipeTitle').getAttribute('required'),null);
+  assert.equal(await page.locator('#recipeCuisine').getAttribute('required'),null);
+  assert.equal(await page.locator('[data-media-mode="none"]').getAttribute('aria-pressed'),'true');
+  await page.locator('#publishButton').click();
+  assert.match(await page.locator('#recipeMessage').innerText(),/2/);
+  await page.locator('#recipeDescription').fill('Fast tomato toast with olive oil and a little salt.');
+  await page.locator('[data-post-mode="shorts"]').click();
+  assert.equal(await page.locator('.optional-recipe-details').getAttribute('open'),'');
+  assert.equal(await page.locator('[data-media-mode="video"]').getAttribute('aria-pressed'),'true');
+  assert.equal(await page.locator('[data-media-mode="image"]').isDisabled(),true);
+  assert.equal(await page.locator('[data-media-mode="none"]').isDisabled(),true);
+  await page.screenshot({path:path.join(out,'shorts-composer.png')});
+  await page.locator('#publishButton').click();
+  assert.match(await page.locator('#recipeMessage').innerText(),/needs a video/);
+  await page.locator('[data-post-mode="standard"]').click();
+  await page.locator('[data-media-mode="none"]').click();
+  await page.locator('#publishButton').click();
+  await page.locator('#composerDialog').waitFor({state:'hidden'});
+  assert.equal(await page.locator('.recipe-card').count(),4);
+  const inserted=await page.evaluate(()=>window.__recipeTest.recipes.find(x=>x.title==='Fast tomato toast with olive oil and a little salt.'));
+  assert.equal(inserted.visibility,'published');assert.equal(inserted.image_url,null);assert.equal(inserted.video_url,null);
+  assert.equal(await page.evaluate(()=>window.__recipeTest.recipe_ingredients.filter(x=>x.recipe_id===window.__recipeTest.recipes.at(-1).id).length),0);
+  assert.equal(await page.evaluate(()=>window.__recipeTest.recipe_steps.filter(x=>x.recipe_id===window.__recipeTest.recipes.at(-1).id).length),0);
+  assert.equal(await page.evaluate(()=>window.__recipeTest.uploads.length),0);
+  // Backend failure must not leave an incomplete public recipe.
+  await page.locator('#openComposer').click();
+  await page.locator('.optional-recipe-details summary').click();
+  await page.locator('#recipeTitle').fill('Failure test');
+  await page.locator('#recipeDescription').fill('A complete description for a failed publication test.');
+  await page.locator('[data-item]').fill('Basil');
+  await page.locator('[data-quantity]').fill('2 leaves');
+  await page.locator('#steps textarea').fill('Tear the leaves.');
+  await page.locator('[data-media-mode="image"]').click();
+  await page.locator('#imageFile').setInputFiles(path.join(root,'assets/recipe-book-logo.png'));
+  await page.evaluate(()=>window.__recipeTest.failChildren=true);
+  await page.locator('#publishButton').click();
+  await page.waitForFunction(()=>!document.querySelector('#publishButton').disabled);
+  assert.equal(await page.evaluate(()=>window.__recipeTest.recipes.filter(x=>x.title==='Failure test').length),0);
+  assert.equal(await page.evaluate(()=>window.__recipeTest.removals.length),1);
+  assert.equal(await page.locator('#recipeTitle').inputValue(),'Failure test');
+  await page.locator('[data-close-dialog="composerDialog"]').click();
+  await page.locator('#profileButton').click();
+  await page.locator('#profileName').fill('Taken');
+  await page.locator('#profileForm button[type="submit"]').click();
+  assert.match(await page.locator('#profileMessage').innerText(),/already taken/);
+  await page.locator('[data-close-dialog="profileDialog"]').click();
+  await page.setViewportSize({width:390,height:844});
+  await page.goto(origin,{waitUntil:'networkidle'});
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'mobile page overflow');
+  await page.screenshot({path:path.join(out,'mobile.png'),fullPage:true});
+  await page.locator('.mobile-create').click();
+  assert.equal(await page.locator('#composerDialog').isVisible(),true);
+  assert.equal(await page.locator('#composerDialog').evaluate(el=>el.scrollWidth<=el.clientWidth),true,'mobile dialog overflow');
+  await page.screenshot({path:path.join(out,'mobile-composer.png'),fullPage:false});
+  await page.locator('[data-close-dialog="composerDialog"]').click();
+  await page.evaluate(()=>{window.__recipeTest.recipes=[];});
+  await page.locator('[data-view="all"]').last().click();
+  // Reload the feed via the actual error retry path.
+  await page.route('**/supabase-js@2/+esm',route=>route.fulfill({contentType:'text/javascript',body:'window.__recipeTest.failFeed=true; export function createClient(){return window.__mockClient;}'}));
+  await page.reload({waitUntil:'networkidle'});
+  assert.equal(await page.locator('#retryButton').isVisible(),true);
+  await page.locator('.mobile-create').click();
+  assert.equal(await page.locator('#composerDialog').isVisible(),true,'draft editor works while feed is offline');
+  await page.locator('[data-close-dialog="composerDialog"]').click();
+  await page.evaluate(()=>{window.__recipeTest.failFeed=false;window.__recipeTest.recipes=[];});
+  await page.locator('#retryButton').click();
+  assert.equal(await page.locator('.recipe-card').count(),0);
+  assert.equal(await page.locator('#emptyState').isVisible(),true);
+  assert.equal(await page.locator('#retryButton').isVisible(),false);
+  await page.setViewportSize({width:1440,height:1050});
+  await page.screenshot({path:path.join(out,'desktop-empty.png'),fullPage:true});
+  assert.deepEqual(errors,[],'browser errors');
+  console.log('PASS: English UI, combined filters, saved persistence, recipe details, cooking checks, 3-step validation, media mode cleanup, draft publishing/rollback, duplicate names, error retry, mobile layouts. Screenshots: '+out);
+  await browser.close();server.close();
+})().catch(error=>{console.error(error);server.close();process.exit(1);});

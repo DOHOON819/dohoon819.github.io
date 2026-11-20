@@ -1,71 +1,84 @@
-# 잎새 · 내 식물의 오늘
+# Recipe Story
 
-토양 수분과 물통 상태를 확인하는 ESP32 식물 관리 대시보드입니다.
+A multilingual recipe-sharing app with a sage-and-beige palette. The community feed contains real user submissions. Advertising is intentionally deferred.
 
-사이트: https://dohoon819.github.io/
+## Experience
 
-## 화면
+- Discover all recipes, videos, photos or your saved collection.
+- Open **Shorts** to swipe vertically through video recipes only. Only the visible video plays, muted initially; comments, recipe details and background tabs pause playback. Touch scrolling, keyboard navigation, sound and native playback controls are available.
+- Portrait and landscape viewing use sage/beige margins and uncropped media. The full ingredients and cooking method remain one tap away.
+- Public hearts, likes/dislikes and comments are shared between visitors. Hearts are independent; like/dislike are mutually exclusive and can be withdrawn. Comment authors can delete their own comments. Failed writes preserve the draft and do not increment counts.
+- Browse Korean, Japanese, Chinese, Mexican, American, French, Italian, Indian, Arab and Australian cuisines, alongside brunch, lunchbox, quick meals, pasta, vegetarian, desserts and drinks.
+- Combine ingredient/title search with category, cooking-time and difficulty filters; sort by newest or quickest.
+- Explore quick meals, noodles & pasta, desserts, or a random matching recipe.
+- Save favorites **on the current browser/device**. Bookmarks do not sync between devices.
+- Read ingredients and instructions as a cooking checklist.
+- Choose a regular recipe post or a Shorts post in the quick composer. Regular posts can use text, a photo or a video; Shorts posts require a playable video.
+- A description is the only required recipe field. Titles are generated automatically, while ingredients, steps, creator name and other details remain optional.
+- Upload JPG/PNG/WebP photos up to 10 MB, or MP4/WebM/MOV videos up to 100 MB. Playback depends on the browser's codec support.
+- Choose full-bleed or uncropped photo framing.
+- Claim or rename a unique creator name without a visible sign-up/login flow.
+- The name control is visible beside the language selector. Arabic text does not mirror navigation or the app layout.
 
-- 토양 수분 게이지, 수분 상태 설명과 원시값
-- 수위 센서의 물 있음 / 물 부족 상태
-- 이 페이지를 연 동안 수신한 최근 30개 수분 측정값
-- 마지막 수신 시간, Wi-Fi 신호 세기, ESP32 가동 시간
-- 연결이 끊겼을 때 이전 측정값임을 알리는 표시
-- 물 부족 및 센서 오류 시 측정 중단 안내
+## Identity and data
 
-그래프에는 정상 측정값만 추가합니다. 측정이 멈춘 동안의 값과 오류 값은 새 측정으로 기록하지 않습니다. 수위 그림은 물 있음/없음을 구분하는 장식이며 물의 양을 측정한 비율이 아닙니다.
+The production app uses a no-sign-up community backend. Each browser creates a private local signing key and publishes signed recipe/profile events to redundant public relays. The key never leaves that browser; it proves ownership when deleting a recipe. A creator name is **not** a password or recovery method. Keep the same browser storage to retain ownership.
 
-## ESP32 설정
+Creator names are checked case-insensitively against current community profiles before they are claimed. Signed ownership prevents someone using a different browser key from deleting another creator's recipe. Clearing browser data removes the local ownership key, so there is intentionally no password-reset flow.
 
-Arduino IDE에 `PubSubClient` by Nick O'Leary를 설치합니다.
-보드 패키지는 `esp32 by Espressif Systems`를 사용합니다.
+Photos and videos are uploaded with signed HTTP authorization to the configured public media service. The current free tier supports JPG/PNG/WebP up to 10 MB in the interface and MP4/WebM/MOV up to 100 MB. Recipe events are replicated to the relays configured in `config.js`; media is removed on creator deletion when the host accepts the cleanup request.
 
-1. `esp32/esp32_plant_mqtt/secrets.example.h`를 같은 폴더의 `secrets.h`로 복사합니다.
-2. Wi-Fi 이름과 비밀번호를 입력합니다. 실제 `secrets.h`는 GitHub에 올리지 않습니다.
-3. `esp32/esp32_plant_mqtt/esp32_plant_mqtt.ino`를 Arduino IDE에서 엽니다.
-4. 사용하는 ESP32 보드와 포트를 선택해 업로드합니다.
-5. 시리얼 모니터를 115200 baud로 열어 연결 및 전송 로그를 확인합니다.
+The historical Supabase implementation and migrations remain as reference under `supabase/`. New social features use the community backend configured in production. `config.js` contains only browser-safe public settings. Never put a secret/service-role key in browser code.
 
-별도의 I2C 센서나 해당 라이브러리는 필요하지 않습니다.
-웹사이트는 기존 ESP32 펌웨어와도 호환되며 추가 데이터 필드는 무시합니다.
-측정과 전송 코드 변경을 실제 보드에 반영하려면 새 스케치를 업로드해야 합니다.
+Shared recipe URLs query the exact signed recipe ID, so they can open posts outside the newest-feed window. Reactions use addressable events per recipe and visitor, comments use signed events, and deletion targets are checked against their author. Open interaction panels refresh every 15 seconds while the page is visible. Relay failures show retry feedback instead of a false empty success. Public relays and media hosts are third-party services: permanent hosting is not guaranteed. Keep originals of important uploads.
 
-## 배선과 자동 급수
+## Run and deploy
 
-| 부품 | ESP32 |
-| --- | --- |
-| SEN0114 VCC | 3.3V |
-| SEN0114 GND | GND |
-| SEN0114 Signal | GPIO34 |
-| 수위 센서 신호 | GPIO27 (INPUT_PULLUP, HIGH = 물 부족) |
-| 펌프 구동 회로 제어 | GPIO26 |
+This is a static site with no build step. Serve the project folder with any static HTTP server. Relative asset URLs work at a GitHub Pages repository subpath and on Vercel.
 
-토양 수분 보정값은 Dry=0, Wet=2670이며 0~100%로 환산해 표시합니다.
-원시값 2200 이하에서 급수를 시작하고 2650 이상에서 종료합니다.
-펌프는 최대 5초 가동 후 60초 동안 흙이 안정화되기를 기다립니다.
+- GitHub Pages: https://dohoon819.github.io/
+- Existing Vercel address: https://hanip-recipe.vercel.app/
 
-물 부족 시 펌프와 토양 측정을 중단하며 연결과 상태 전송은 유지합니다.
-물을 채운 상태가 1초간 유지되면 측정을 재개합니다.
-토양 원시값이 0이면 센서 오류로 판단하여 재시작 전까지 자동 급수를 차단합니다.
+The project URL remains unchanged; the product name is **Recipe Story**. Visitors can choose English, English (Australia), 한국어, 日本語, Français, Italiano, हिन्दी, Español (México), 中文 or العربية. Their choice is remembered in the browser.
 
-## 통신
+## Search visibility
 
-ESP32 → MQTT → GitHub Pages 대시보드 순서로 연결됩니다.
-토양 수분 원시값/백분율, 물 부족 여부, 센서 오류, 측정 중단 여부, Wi-Fi 신호와 가동 시간을 약 5초마다 전송합니다.
-토픽 이름은 기존 장치와의 호환을 위해 유지합니다.
+- Google Search Console ownership verification file: `google6bf2038a52595488.html` (keep this file deployed)
+- Canonical URL: `https://dohoon819.github.io/`
+- XML sitemap: `https://dohoon819.github.io/sitemap.xml`
+- Crawl guidance: `robots.txt`
+- Search result metadata: descriptive title/summary, Open Graph, Twitter Card, and `WebSite` structured data
 
-아직 측정하지 못한 값은 `null`, 측정 중단 후 남은 값은 `soilStale: true`로 전송합니다.
-새 데이터가 20초 넘게 없으면 센서 응답 없음 상태로 표시합니다.
+## Tests
 
-공개 EMQX 테스트 브로커를 사용하므로 데이터가 공개될 수 있습니다.
-전용 운영 환경에는 인증을 갖춘 MQTT 브로커를 사용하세요.
-
-## 웹 검증
+Install a test dependency without changing the static app:
 
 ```sh
-node --check app.js
-node --test tests/app.test.cjs
+npm install --no-save --package-lock=false playwright@1.62.1 ws
+npx playwright install chromium
+node tests/recipe-book.spec.cjs
+node tests/social.spec.cjs
+node tests/translation-audit.cjs
 ```
 
-웹사이트는 HTML/CSS/JavaScript로 구성되며 별도 빌드 없이 GitHub Pages에서 배포합니다.
+Optional environment variables: `RECIPE_BOOK_PLAYWRIGHT` (module path), `RECIPE_BOOK_BROWSER` (browser executable), `RECIPE_BOOK_TEST_OUTPUT` (screenshots, default `test-results/`).
 
+The main browser suite intercepts the backend and uploads with in-memory fixtures. It **does not create production posts or accounts**. It covers filters, local bookmarks, cooking checks, composer validation, media switching, draft publication/rollback, duplicate names, load-error recovery, sharing and mobile overflow.
+
+`tests/social.spec.cjs` uses an isolated local relay with real signed events and two independent browser identities. It verifies shared reactions/comments, ownership, escaped comment text, failure recovery, exact-ID links, actual video decoding, shorts navigation, mobile/landscape layouts, locales and required fields. `tests/translation-audit.cjs` checks dictionary coverage.
+
+For an explicitly opted-in infrastructure test, set `RECIPE_BOOK_LIVE=1` and run `node tests/community-social-live.cjs`. It uploads a short generated test video and tests cross-visitor delivery on the configured live services, under a separate test tag so it never appears in the normal feed. It deletes its temporary comment and recipe and checks their removal. `tests/public-media-audit.cjs` only reads and attempts playback of existing public videos.
+
+`tests/community-smoke.spec.cjs` checks the live public feed. `tests/community-publish.spec.cjs` performs an end-to-end photo or video publish, opens the shared deep link as a new visitor, and immediately deletes the clearly marked test recipe.
+
+For a read-only production smoke test, run `node tests/live-smoke.cjs https://dohoon819.github.io/`. It opens the page, reads the public feed and checks both screen sizes without creating a session or posting content.
+
+## Recently viewed collection
+
+The sidebar's **Recently viewed** entry and the feed's **Recent** tab show up to 100 recipes actually opened in details or viewed in shorts, most recently viewed first. Reopening a recipe moves it to the top without duplicates. Only recipe IDs and viewing timestamps are kept under `recipe-book:recent:v1` in this browser's localStorage. The app does not publish a viewing-history event or associate history with the public author profile. Loading remembered recipes sends ordinary ID-based read queries to public relays.
+
+History supports individual removal, confirmed clearing, reload persistence and cross-tab updates. Clearing history does not delete posts or saved bookmarks. Public recipes are fetched by exact ID when opening history, including older posts outside the latest feed, and signed author deletions are respected. If browser storage is blocked, history lasts only for the current visit. Tests: `node tests/recent-unit.cjs`, `node tests/recipe-book.spec.cjs`, `node tests/social.spec.cjs`.
+
+## Artwork
+
+The hero, link-preview image, favicon and interface icons are original code-native Recipe Story artwork. See [asset notes](assets/README.md).

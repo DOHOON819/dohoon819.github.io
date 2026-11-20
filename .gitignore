@@ -1,2 +1,5 @@
-esp32/esp32_bh1750_mqtt/secrets.h
 .DS_Store
+.vercel
+node_modules
+npm-debug.log*
+test-results/
