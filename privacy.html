@@ -22,7 +22,7 @@
     <div class="intro">
       <p class="eyebrow">RECIPE STORY · YOUR PRIVACY</p>
       <h1>Privacy Policy<small lang="ko">개인정보처리방침</small></h1>
-      <p class="meta">Effective / Last updated: <time datetime="2026-11-15">15 November 2026</time><br><span lang="ko">시행일 및 최종 수정일: 2026년 11월 15일</span></p>
+      <p class="meta">Effective / Last updated: <time datetime="2026-11-20">20 November 2026</time><br><span lang="ko">시행일 및 최종 수정일: 2026년 11월 20일</span></p>
     </div>
     <article class="policy" id="en" lang="en" aria-labelledby="en-title">
       <h2 id="en-title">Your recipes. Your choices.</h2>
@@ -41,13 +41,14 @@
       <ul>
         <li><strong>Public Nostr relays:</strong> the current configuration uses <code>nos.lol</code>, <code>relay.primal.net</code> and <code>relay.nostr.band</code> for reading and publishing signed profile, recipe, comment, reaction and deletion events. These are independent services, not a private database controlled by Recipe Story.</li>
         <li><strong>Media hosts:</strong> selected files are sent to <code>nostrage.com/api/v2/media</code>, with <code>cdn.nostrcheck.me</code> used as a fallback. A failed upload can be retried with the other service. Uploaded media URLs are included in public recipes. These hosts may retain files even if a later recipe publication fails or cleanup is unsuccessful.</li>
-        <li><strong>Website and asset delivery:</strong> GitHub Pages serves this site. The app loads code from jsDelivr and fonts from Google Fonts. Requests to these services reveal network information needed to serve those resources. This privacy page itself does not load the recipe backend, remote fonts or analytics.</li>
+        <li><strong>Website and asset delivery:</strong> GitHub Pages serves this site. The app loads code from jsDelivr and fonts from Google Fonts. Requests to these services reveal network information needed to serve those resources. This privacy page itself does not load the recipe backend, remote fonts, advertising or analytics.</li>
+        <li><strong>Advertising:</strong> the main Recipe Story page includes Google AdSense code for site verification and, after approval and activation, advertising. Google and its advertising partners may receive IP address, device/browser information, cookie or similar-technology identifiers, requested page, and ad views, clicks or interactions to deliver and measure ads, prevent fraud, and personalize ads where permitted. Google acts under its own <a href="https://policies.google.com/privacy">Privacy Policy</a> and explains advertising data use at <a href="https://policies.google.com/technologies/ads">How Google uses information for advertising</a>. Consent or privacy choices may be shown where required.</li>
         <li><strong>Other people and services:</strong> anyone able to access the public network can read, copy, index or redistribute public content, including through other Nostr clients. Images or videos in posts may be served by additional third-party hosts. Using the system share menu sends the selected link to the destination you choose.</li>
         <li><strong>Email provider:</strong> privacy requests sent to our Gmail contact address are handled through Google's email service. Your browser, Android and Google Play also have their own privacy settings and policies.</li>
       </ul>
       <p>These services and public readers may process data outside your country. We do not control every relay's location, retention period or onward copying. The current live configuration uses the public community backend; the legacy Supabase configuration in the source is not the active backend.</p>
       <h3>3. Permissions, advertising and security</h3>
-      <p>The current Android wrapper does not request contacts, SMS, precise location, microphone, camera or broad photo-library/storage permissions. You choose individual files with the browser/system file picker; the app does not scan your entire photo library. A video you select can contain audio. Recipe Story has no advertising or marketing analytics SDK in this version and the operator does not sell personal data.</p>
+      <p>The current Android wrapper does not request contacts, SMS, precise location, microphone, camera or broad photo-library/storage permissions. You choose individual files with the browser/system file picker; the app does not scan your entire photo library. A video you select can contain audio. The website includes Google AdSense code; ads appear only after Google approves and advertising is enabled. Recipe Story does not include a separate marketing analytics SDK, and the operator does not sell personal data. You can manage Google ad personalization in <a href="https://myadcenter.google.com/">My Ad Center</a> and use any consent or privacy controls shown on the site.</p>
       <p>The site and configured publishing/upload connections use HTTPS or secure WebSockets (WSS). Public content is not end-to-end confidential. Actions are signed in your browser, but the locally stored private key is not protected by a separate Recipe Story password. Protect access to your device and browser. Third-party media, browsers and providers have their own security practices; no method of storage or transmission is risk-free.</p>
       <h3>4. Retention and deletion limits</h3>
       <ul>
@@ -87,13 +88,14 @@
       <ul>
         <li><strong>공개 Nostr 릴레이:</strong> 현재 <code>nos.lol</code>, <code>relay.primal.net</code>, <code>relay.nostr.band</code>에서 서명된 프로필·레시피·댓글·반응·삭제 이벤트를 읽고 게시합니다. Recipe Story가 단독으로 통제하는 비공개 데이터베이스가 아닌 독립 서비스입니다.</li>
         <li><strong>미디어 저장소:</strong> 선택한 파일을 <code>nostrage.com/api/v2/media</code>로 보내며 실패 시 <code>cdn.nostrcheck.me</code>로 재시도할 수 있습니다. 미디어 주소는 공개 레시피에 포함됩니다. 이후 게시에 실패하거나 정리가 성공하지 않으면 업로드한 파일이 저장소에 남을 수 있습니다.</li>
-        <li><strong>웹사이트·코드·폰트 제공자:</strong> GitHub Pages가 사이트를 제공하고, 앱은 jsDelivr의 코드 및 Google Fonts의 글꼴을 불러옵니다. 각 요청을 처리하는 데 필요한 접속 정보가 해당 제공자에게 전달됩니다. 이 개인정보처리방침 페이지 자체는 레시피 서버, 외부 폰트, 분석 도구를 불러오지 않습니다.</li>
+        <li><strong>웹사이트·코드·폰트 제공자:</strong> GitHub Pages가 사이트를 제공하고, 앱은 jsDelivr의 코드 및 Google Fonts의 글꼴을 불러옵니다. 각 요청을 처리하는 데 필요한 접속 정보가 해당 제공자에게 전달됩니다. 이 개인정보처리방침 페이지 자체는 레시피 서버, 외부 폰트, 광고 또는 분석 도구를 불러오지 않습니다.</li>
+        <li><strong>광고 제공자:</strong> Recipe Story 메인 페이지에는 사이트 확인 및 승인·활성화 이후의 광고 게재를 위한 Google AdSense 코드가 포함됩니다. Google과 광고 파트너는 광고 제공·측정·부정행위 방지 및 허용되는 경우 맞춤 광고를 위해 IP 주소, 기기·브라우저 정보, 쿠키 또는 유사 기술 식별자, 요청한 페이지, 광고 조회·클릭·상호작용 정보를 받을 수 있습니다. Google의 <a href="https://policies.google.com/privacy?hl=ko">개인정보처리방침</a>과 <a href="https://policies.google.com/technologies/ads?hl=ko">광고 정보 사용 안내</a>가 적용되며, 필요한 지역에서는 동의 또는 개인정보 선택 화면이 표시될 수 있습니다.</li>
         <li><strong>다른 사람과 서비스:</strong> 공개 네트워크에 접근할 수 있는 사람은 다른 Nostr 앱 등을 통해 게시물을 읽고 복사·검색·재배포할 수 있습니다. 게시물의 미디어가 다른 외부 호스트에서 제공될 수도 있습니다. 기기의 공유 메뉴를 이용하면 직접 선택한 대상에게 링크를 보냅니다.</li>
         <li><strong>이메일 제공자:</strong> 공개된 Gmail 문의 주소로 보낸 요청은 Google의 이메일 서비스에서 처리합니다. 브라우저, Android, Google Play에도 각각의 개인정보 설정과 정책이 적용됩니다.</li>
       </ul>
       <p>이 제공자와 공개 열람자가 이용자의 거주 국가 밖에서 정보를 처리할 수 있습니다. 운영자는 모든 릴레이의 서버 국가, 보관 기간과 재배포를 통제하지 못합니다. 현재 서비스는 공개 커뮤니티 백엔드를 사용하며, 소스에 남아 있는 이전 Supabase 설정은 활성 백엔드가 아닙니다.</p>
       <h3>3. 권한·광고·보안</h3>
-      <p>현재 Android 앱에는 연락처·문자·정밀 위치·마이크·카메라 또는 전체 사진첩·저장소 접근 권한을 요청하는 기능이 없습니다. 브라우저나 기기의 파일 선택기로 직접 고른 파일을 처리하며 사진첩 전체를 탐색하지 않습니다. 선택한 영상에는 음성이 포함될 수 있습니다. 이 버전에 광고·마케팅 분석 SDK는 없으며 운영자는 개인정보를 판매하지 않습니다.</p>
+      <p>현재 Android 앱에는 연락처·문자·정밀 위치·마이크·카메라 또는 전체 사진첩·저장소 접근 권한을 요청하는 기능이 없습니다. 브라우저나 기기의 파일 선택기로 직접 고른 파일을 처리하며 사진첩 전체를 탐색하지 않습니다. 선택한 영상에는 음성이 포함될 수 있습니다. 웹사이트에는 Google AdSense 코드가 포함되며 Google의 승인과 광고 활성화 이후에 광고가 표시됩니다. 별도의 마케팅 분석 SDK는 없고 운영자는 개인정보를 판매하지 않습니다. <a href="https://myadcenter.google.com/?hl=ko">내 광고 센터</a>와 사이트에 표시되는 동의·개인정보 선택 기능에서 Google 광고 맞춤설정을 관리할 수 있습니다.</p>
       <p>웹사이트와 설정된 게시·업로드 연결은 HTTPS 또는 보안 WebSocket(WSS)을 사용합니다. 공개 게시물은 종단 간 비밀 메시지가 아닙니다. 브라우저에서 동작에 서명하지만, 로컬 개인키를 별도의 Recipe Story 비밀번호로 암호화하지는 않습니다. 기기와 브라우저 접근을 보호해 주세요. 외부 미디어와 제공자의 보안 방식은 각각 다르며 어떤 저장·전송 방식도 위험이 전혀 없다고 보장할 수는 없습니다.</p>
       <h3>4. 보관 기간과 삭제의 한계</h3>
       <ul>

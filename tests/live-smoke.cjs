@@ -19,6 +19,10 @@ const { chromium } = require(process.env.RECIPE_BOOK_PLAYWRIGHT || 'playwright')
     assert.equal(await page.title(), 'Recipe Story — Good food. Worth sharing.');
     assert.equal(await page.locator('link[rel="canonical"]').getAttribute('href'), 'https://dohoon819.github.io/');
     assert.match(await page.locator('meta[name="robots"]').getAttribute('content'), /index,follow/);
+    assert.equal(await page.locator('meta[name="google-adsense-account"]').getAttribute('content'), 'ca-pub-6970405190551482');
+    assert.equal(await page.locator('script[src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6970405190551482"]').count(), 1);
+    const adsTxt = await page.evaluate(() => fetch('ads.txt').then(response => response.text()));
+    assert.equal(adsTxt.trim(), 'google.com, pub-6970405190551482, DIRECT, f08c47fec0942fa0');
     const verification = await page.evaluate(() => fetch('google6bf2038a52595488.html').then(response => response.text()));
     assert.equal(verification.trim(), 'google-site-verification: google6bf2038a52595488.html');
     const sitemap = await page.evaluate(() => fetch('sitemap.xml').then(response => response.text()));

@@ -1,6 +1,6 @@
 # Recipe Story
 
-A multilingual recipe-sharing app with a sage-and-beige palette. The community feed contains real user submissions. Advertising is intentionally deferred.
+A multilingual recipe-sharing app with a sage-and-beige palette. The community feed contains real user submissions. Google AdSense verification and Auto Ads code is installed; ads appear only after Google approves the site and advertising is enabled.
 
 ## Experience
 
